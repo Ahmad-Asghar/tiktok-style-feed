@@ -1,12 +1,34 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:responsive_sizer/responsive_sizer.dart';
 import 'package:tiktok_style_feed/screens/auth/home/provider/home_provider.dart';
+import 'package:tiktok_style_feed/screens/auth/profile/provider/user_profile_provider.dart';
+import 'package:tiktok_style_feed/widgets/loading_indicator.dart';
 import 'package:video_player/video_player.dart';
-
 import 'model/video_model.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,13 +36,30 @@ class HomeScreen extends StatelessWidget {
       builder: (context, provider, _) {
         if (provider.isLoading) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: Center(child: CustomLoadingIndicator()),
           );
         }
 
         return Scaffold(
-          body: PageView.builder(
+
+          body: kIsWeb
+              ? ListView.builder(
+
+            padding: EdgeInsets.zero,
+            itemCount: provider.videos.length,
+            itemBuilder: (context, index) {
+              final video = provider.videos[index];
+              return SizedBox(
+                height: MediaQuery.of(context).size.height,
+                child: VideoPlayerItem(video: video),
+              );
+            },
+          )
+              : PageView.builder(
+            controller: _pageController,
             scrollDirection: Axis.vertical,
+            pageSnapping: true,
+            physics: const ClampingScrollPhysics(),
             itemCount: provider.videos.length,
             itemBuilder: (context, index) {
               final video = provider.videos[index];
@@ -32,6 +71,8 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+
+
 
 class VideoPlayerItem extends StatefulWidget {
   final VideoModel video;
@@ -64,7 +105,8 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<HomeProvider>(context);
-    final currentUserId = "testUser123"; // replace with your auth user ID later
+    final userProvider = Provider.of<UserProfileProvider>(context);
+    final currentUserId = userProvider.userModel.uid;
 
     return Stack(
       children: [
@@ -99,7 +141,7 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
                   widget.video.likes.contains(currentUserId)
                       ? Icons.favorite
                       : Icons.favorite_border,
-                  color: Colors.white,
+                  color: Colors.red,
                   size: 30,
                 ),
               ),
@@ -116,14 +158,18 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
                   widget.video.saves.contains(currentUserId)
                       ? Icons.bookmark
                       : Icons.bookmark_outline,
-                  color: Colors.white,
+                  color: Colors.yellow,
                   size: 30,
                 ),
+              ),
+              Text(
+                widget.video.saves.length.toString(),
+                style: const TextStyle(color: Colors.white),
               ),
               const SizedBox(height: 16),
               IconButton(
                 onPressed: () {
-                  // download logic later
+
                 },
                 icon: const Icon(Icons.download, color: Colors.white, size: 30),
               ),
@@ -132,7 +178,7 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
         ),
 
         Positioned(
-          bottom: 40,
+          bottom: 100,
           left: 16,
           right: 16,
           child: Column(

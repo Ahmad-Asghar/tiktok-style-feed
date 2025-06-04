@@ -17,21 +17,21 @@ import 'core/utils/navigator_services.dart';
 Future<void> main() async {
 
   WidgetsFlutterBinding.ensureInitialized();
-  if (kIsWeb) {
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: "AIzaSyCFguyeu04Rl5mIg6zHhsX7RX6BhznR4IA",
-        authDomain: "voice-writer-d437e.firebaseapp.com",
-        projectId: "voice-writer-d437e",
-        storageBucket: "voice-writer-d437e.appspot.com",
-        messagingSenderId: "1039016699287",
-        appId: "1:1039016699287:web:f2bddfc29bac5456e650d2",
-        measurementId: "G-YVFDW5RJ50",
-      ),
-    );
-  } else {
-    await Firebase.initializeApp();
-  }
+
+  await Firebase.initializeApp(
+    options: const FirebaseOptions(
+      apiKey: "AIzaSyCFguyeu04Rl5mIg6zHhsX7RX6BhznR4IA",
+      authDomain: "voice-writer-d437e.firebaseapp.com",
+      projectId: "voice-writer-d437e",
+      storageBucket: "voice-writer-d437e.appspot.com",
+      messagingSenderId: "1039016699287",
+      appId: "1:1039016699287:web:f2bddfc29bac5456e650d2",
+      measurementId: "G-YVFDW5RJ50",
+    ),
+  );
+  // } else {
+  //   await Firebase.initializeApp();
+  // }
 
   runApp(
     //const MyApp(),
@@ -75,6 +75,3 @@ class MyApp extends StatelessWidget {
     });
   }
 }
-
-
-
