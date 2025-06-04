@@ -1,5 +1,6 @@
 
 import 'package:flutter/cupertino.dart';
+import 'package:tiktok_style_feed/screens/auth/home/root_screen.dart';
 import '../screens/auth/login/login_screen.dart';
 import '../screens/auth/sign_up/signup_screen.dart';
 import '../screens/auth/splash_screen/splash_screen.dart';
@@ -15,6 +16,7 @@ class AppRoutes {
     splashScreen: (_) => SplashScreen(),
     login: (_) => LoginScreen(),
     signUp: (_) => SignUpScreen(),
+    root: (_) => RootScreen(),
 
 
   };

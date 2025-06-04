@@ -3,32 +3,39 @@ import 'package:provider/provider.dart';
 import 'package:tiktok_style_feed/screens/auth/home/provider/home_provider.dart';
 import 'package:video_player/video_player.dart';
 
+import 'model/video_model.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final videoProvider = Provider.of<HomeProvider>(context);
+    return Consumer<HomeProvider>(
+      builder: (context, provider, _) {
+        if (provider.isLoading) {
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
 
-    return Scaffold(
-      body: videoProvider.isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : videoProvider.videoUrls.isEmpty
-          ? const Center(child: Text("No videos found"))
-          : PageView.builder(
-        scrollDirection: Axis.vertical,
-        itemCount: videoProvider.videoUrls.length,
-        itemBuilder: (context, index) {
-          return VideoPlayerItem(videoUrl: videoProvider.videoUrls[index]);
-        },
-      ),
+        return Scaffold(
+          body: PageView.builder(
+            scrollDirection: Axis.vertical,
+            itemCount: provider.videos.length,
+            itemBuilder: (context, index) {
+              final video = provider.videos[index];
+              return VideoPlayerItem(video: video);
+            },
+          ),
+        );
+      },
     );
   }
 }
 
 class VideoPlayerItem extends StatefulWidget {
-  final String videoUrl;
-  const VideoPlayerItem({required this.videoUrl, super.key});
+  final VideoModel video;
+  const VideoPlayerItem({required this.video, super.key});
 
   @override
   State<VideoPlayerItem> createState() => _VideoPlayerItemState();
@@ -40,7 +47,7 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
   @override
   void initState() {
     super.initState();
-    _controller = VideoPlayerController.network(widget.videoUrl)
+    _controller = VideoPlayerController.network(widget.video.videoUrl)
       ..initialize().then((_) {
         setState(() {});
         _controller.play();
@@ -56,6 +63,9 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
 
   @override
   Widget build(BuildContext context) {
+    final provider = Provider.of<HomeProvider>(context);
+    final currentUserId = "testUser123"; // replace with your auth user ID later
+
     return Stack(
       children: [
         _controller.value.isInitialized
@@ -71,36 +81,76 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
         )
             : const Center(child: CircularProgressIndicator()),
 
-        // Action Buttons
         Positioned(
           right: 16,
           bottom: 100,
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
             children: [
-              IconButton(
-                onPressed: () {
-                  // Like toggle logic here
-                },
-                icon: const Icon(Icons.favorite, color: Colors.white, size: 30),
+              CircleAvatar(
+                backgroundImage: NetworkImage(widget.video.uploaderImage),
+                radius: 25,
               ),
               const SizedBox(height: 16),
               IconButton(
                 onPressed: () {
-                  // Save logic here
+                  provider.toggleLike(widget.video, currentUserId);
                 },
-                icon: const Icon(Icons.bookmark, color: Colors.white, size: 30),
+                icon: Icon(
+                  widget.video.likes.contains(currentUserId)
+                      ? Icons.favorite
+                      : Icons.favorite_border,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+              Text(
+                widget.video.likes.length.toString(),
+                style: const TextStyle(color: Colors.white),
               ),
               const SizedBox(height: 16),
               IconButton(
                 onPressed: () {
-                  // Download logic here
+                  provider.toggleSave(widget.video, currentUserId);
+                },
+                icon: Icon(
+                  widget.video.saves.contains(currentUserId)
+                      ? Icons.bookmark
+                      : Icons.bookmark_outline,
+                  color: Colors.white,
+                  size: 30,
+                ),
+              ),
+              const SizedBox(height: 16),
+              IconButton(
+                onPressed: () {
+                  // download logic later
                 },
                 icon: const Icon(Icons.download, color: Colors.white, size: 30),
               ),
             ],
           ),
         ),
+
+        Positioned(
+          bottom: 40,
+          left: 16,
+          right: 16,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "@${widget.video.uploaderName}",
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                widget.video.caption,
+                style: const TextStyle(color: Colors.white, fontSize: 14),
+              ),
+            ],
+          ),
+        )
       ],
     );
   }

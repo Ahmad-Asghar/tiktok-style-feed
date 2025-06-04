@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:file_picker/file_picker.dart';
 import '../model/video_model.dart';
 
 class HomeProvider extends ChangeNotifier {
@@ -15,7 +15,6 @@ class HomeProvider extends ChangeNotifier {
     fetchVideos();
   }
 
-  // Fetch videos from Firestore
   Future<void> fetchVideos() async {
     try {
       isLoading = true;
@@ -33,8 +32,11 @@ class HomeProvider extends ChangeNotifier {
     }
   }
 
-  // Pick video, upload to storage, save metadata to Firestore
-  Future<void> pickAndUploadVideo(String caption) async {
+  Future<void> pickAndUploadVideo({
+    required String caption,
+    required String uploaderName,
+    required String uploaderImage,
+  }) async {
     try {
       FilePickerResult? result = await FilePicker.platform.pickFiles(type: FileType.video);
 
@@ -49,22 +51,27 @@ class HomeProvider extends ChangeNotifier {
         TaskSnapshot snapshot = await uploadTask;
         String videoUrl = await snapshot.ref.getDownloadURL();
 
-        // Save to Firestore
         var docRef = await FirebaseFirestore.instance.collection('videos').add({
           'videoUrl': videoUrl,
           'caption': caption,
-          'likes': 0,
+          'likes': [],
+          'saves': [],
+          'uploaderName': uploaderName,
+          'uploaderImage': uploaderImage,
         });
 
-        // Add to local list
-        // _videos.insert(
-        //   0,
-        //   VideoModel(
-        //     id: docRef.id,
-        //     videoUrl: videoUrl,
-        //     caption: caption,
-        //   ),
-        // );
+        _videos.insert(
+          0,
+          VideoModel(
+            id: docRef.id,
+            videoUrl: videoUrl,
+            caption: caption,
+            likes: [],
+            saves: [],
+            uploaderName: uploaderName,
+            uploaderImage: uploaderImage,
+          ),
+        );
 
         notifyListeners();
       }
@@ -73,10 +80,12 @@ class HomeProvider extends ChangeNotifier {
     }
   }
 
-  // Like/Unlike video
-  void toggleLike(VideoModel video) async {
-    video.isLiked = !video.isLiked;
-    //video.likes += video.isLiked ? 1 : -1;
+  void toggleLike(VideoModel video, String userId) async {
+    if (video.likes.contains(userId)) {
+      video.likes.remove(userId);
+    } else {
+      video.likes.add(userId);
+    }
 
     await FirebaseFirestore.instance
         .collection('videos')
@@ -86,9 +95,18 @@ class HomeProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Save/Unsave video locally (not in database)
-  void toggleSave(VideoModel video) {
-    video.isSaved = !video.isSaved;
+  void toggleSave(VideoModel video, String userId) async {
+    if (video.saves.contains(userId)) {
+      video.saves.remove(userId);
+    } else {
+      video.saves.add(userId);
+    }
+
+    await FirebaseFirestore.instance
+        .collection('videos')
+        .doc(video.id)
+        .update({'saves': video.saves});
+
     notifyListeners();
   }
 }
