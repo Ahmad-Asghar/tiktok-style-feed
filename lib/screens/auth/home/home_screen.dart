@@ -169,7 +169,7 @@ class _VideoPlayerItemState extends State<VideoPlayerItem> {
               const SizedBox(height: 16),
               IconButton(
                 onPressed: () {
-
+              provider.downloadVideo(context, widget.video);
                 },
                 icon: const Icon(Icons.download, color: Colors.white, size: 30),
               ),
